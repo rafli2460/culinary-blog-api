@@ -48,7 +48,7 @@ The application requires the following database configuration (typically via env
 - `DB_NAME`: Database name.
 - `DB_DIALECT`: Database driver name (e.g., `mysql`).
 
-## 🏃 Getting Started
+## Getting Started
 
 1.  **Clone the repository**
 
