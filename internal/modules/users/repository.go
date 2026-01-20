@@ -10,10 +10,10 @@ import (
 )
 
 type UserRepository interface {
-	Insert(ctx context.Context, user domain.User) error
-	Delete(ctx context.Context, id int64) error
-	UpdateRole(ctx context.Context, id int64, role string) error
-	FindByUsername(ctx context.Context, username string) (domain.User, error)
+	Insert(ctx context.Context, user domain.User) (err error)
+	Delete(ctx context.Context, id int64) (err error)
+	UpdateRole(ctx context.Context, id int64, role string) (err error)
+	FindByUsername(ctx context.Context, username string) (user domain.User, err error)
 }
 
 type Statement struct {
@@ -44,8 +44,8 @@ func initRepository(ctx context.Context, app *server.App) UserRepository {
 	return &r
 }
 
-func (r *Repository) Insert(ctx context.Context, user domain.User) error {
-	_, err := r.stmt.insert.ExecContext(ctx, user)
+func (r *Repository) Insert(ctx context.Context, user domain.User) (err error) {
+	_, err = r.stmt.insert.ExecContext(ctx, user)
 
 	if err != nil {
 		r.app.Logger.Error().Stack().
@@ -56,14 +56,42 @@ func (r *Repository) Insert(ctx context.Context, user domain.User) error {
 	return err
 }
 
-func (r *Repository) Delete(ctx context.Context, id int64) error {
-	panic("not implemented") // TODO: Implement
+func (r *Repository) Delete(ctx context.Context, id int64) (err error) {
+	params := make(map[string]any)
+	params["id"] = id
+
+	_, err = r.stmt.delete.ExecContext(ctx, params)
+	if err != nil {
+		r.app.Logger.Error().Stack().
+			Str("Context", "Update user status").
+			Err(err).Msg("")
+	}
+
+	return
 }
 
-func (r *Repository) UpdateRole(ctx context.Context, id int64, role string) error {
-	panic("not implemented") // TODO: Implement
+func (r *Repository) UpdateRole(ctx context.Context, id int64, role string) (err error) {
+	params := make(map[string]any)
+	params["id"] = id
+	params["role"] = role
+
+	_, err = r.stmt.updateRole.ExecContext(ctx, params)
+	if err != nil {
+		r.app.Logger.Error().Stack().
+			Str("Context", "Update user role").
+			Err(err).Msg("")
+	}
+
+	return
 }
 
-func (r *Repository) FindByUsername(ctx context.Context, username string) (domain.User, error) {
-	panic("not implemented") // TODO: Implement
+func (r *Repository) FindByUsername(ctx context.Context, username string) (user domain.User, err error) {
+	err = r.stmt.findByUsername.GetContext(ctx, &username)
+	if err != nil {
+		r.app.Logger.Error().Stack().
+			Str("Context", "Find user by username").
+			Err(err).Msg("")
+	}
+
+	return
 }
