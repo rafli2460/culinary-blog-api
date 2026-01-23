@@ -20,6 +20,7 @@ func main() {
 		config.DbName:       "culinary_blog",
 		config.DbDialeg:     "mysql",
 		config.ServerPort:   "8080",
+		config.ServerEnv:    "dev",
 	}
 
 	app := server.New(conf)

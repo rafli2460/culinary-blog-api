@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/rafli2460/culinary-blog-api/internal/domain"
+	"github.com/rafli2460/culinary-blog-api/internal/helper/responses"
 )
 
 type Handler struct {
@@ -20,15 +21,11 @@ func NewHandler(service domain.UserService) *Handler {
 func (h *Handler) Register(c *fiber.Ctx) error {
 	var user domain.User
 	if err := c.BodyParser(&user); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
-		})
+		return responses.BadRequest(err)
 	}
 
 	if err := h.service.Register(c.Context(), user); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return responses.InternalServerError(err)
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{

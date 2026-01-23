@@ -14,7 +14,7 @@ type App struct {
 	Logger   *zerolog.Logger
 	Ds       *Datasources
 	Services *Services
-	config   map[string]string
+	Config   map[string]string
 }
 
 type UserHandler interface {
@@ -40,6 +40,6 @@ func New(conf map[string]string) *App {
 	return &App{
 		Fiber:  fiber.New(),
 		Logger: &logger,
-		config: conf,
+		Config: conf,
 	}
 }
