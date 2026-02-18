@@ -57,5 +57,5 @@ func (db *Database) Close() {
 		db.Write.Close()
 	}
 
-	log.Info().Msg("Connection has beeb closed")
+	log.Info().Msg("Connection has been closed")
 }

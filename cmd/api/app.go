@@ -28,11 +28,15 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 	userService := service.NewUserService(userRepo)
 
+	postRepo := repository.NewPostRepository(db)
+	postService := service.NewPostService(postRepo)
+
 	authHandler := handlers.NewAuthHandler(userService)
 	adminHandler := handlers.NewAdminHandler(userService)
+	postHandler := handlers.NewPostService(postService)
 	app := fiber.New()
 
-	routes.InitRoutes(app, authHandler, adminHandler)
+	routes.InitRoutes(app, authHandler, adminHandler, postHandler)
 
 	appPort := os.Getenv("APP_PORT")
 	if appPort == "" {

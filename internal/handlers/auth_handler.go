@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/rafli2460/culinary-blog-api/internal/models"
 	"github.com/rafli2460/culinary-blog-api/internal/service"
+	"github.com/rafli2460/culinary-blog-api/pkg/response"
 	"github.com/rs/zerolog/log"
 )
 
@@ -22,36 +23,24 @@ func (h *AuthHandler) Register(c fiber.Ctx) error {
 
 	if err := c.Bind().Body(&req); err != nil {
 		log.Warn().Err(err).Msg("failed to parse request registration body")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"status":  fiber.StatusBadRequest,
-			"message": "Format is invalid",
-		})
+		return response.Error(c, fiber.StatusBadRequest, "Format is invalid")
 	}
 
 	log.Info().Str("Username", req.Username).Msg("User registration success")
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"status":  fiber.StatusCreated,
-		"message": "Registration successful, please login",
-	})
+	return response.Success(c, fiber.StatusCreated, "Registration successful, please login", nil, nil)
 }
 
 func (h *AuthHandler) Login(c fiber.Ctx) error {
 	var req models.LoginRequest
 
 	if err := c.Bind().Body(&req); err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"status":  fiber.StatusUnauthorized,
-			"message": "invalid format",
-		})
+		return response.Error(c, fiber.StatusUnauthorized, "invalid format")
 	}
 
 	token, err := h.userService.Login(c.Context(), req)
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"status":  fiber.StatusUnauthorized,
-			"message": err.Error(),
-		})
+		return response.Error(c, fiber.StatusUnauthorized, err.Error())
 	}
 	c.Cookie(&fiber.Cookie{
 		Name:     "jwt_token",
@@ -64,10 +53,7 @@ func (h *AuthHandler) Login(c fiber.Ctx) error {
 
 	log.Info().Str("username", req.Username).Msg("User Login Success")
 
-	return c.JSON(fiber.Map{
-		"status":  "success",
-		"message": "Login successful",
-	})
+	return response.Success(c, fiber.StatusOK, "Login successful", nil, nil)
 }
 
 func (h *AuthHandler) Logout(c fiber.Ctx) error {
@@ -80,8 +66,5 @@ func (h *AuthHandler) Logout(c fiber.Ctx) error {
 
 	log.Info().Msg("User logout success")
 
-	return c.JSON(fiber.Map{
-		"status":  "success",
-		"message": "Logout successful",
-	})
+	return response.Success(c, fiber.StatusOK, "Logout successful", nil, nil)
 }

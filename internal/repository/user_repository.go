@@ -8,7 +8,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/rafli2460/culinary-blog-api/internal/config"
 	"github.com/rafli2460/culinary-blog-api/internal/models"
-	"github.com/rs/zerolog/log"
+	"github.com/rafli2460/culinary-blog-api/pkg/logger"
 )
 
 type UserRepository interface {
@@ -37,10 +37,11 @@ func (r *userRepository) GetByUsername(ctx context.Context, username string) (mo
 	err := r.db.Read.GetContext(ctx, &user, query, username)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return user, errors.New("user not found")
+			return user, logger.ValidationError("user not found")
 		}
-		log.Error().Err(err).Str("username", username).Msg("Error Database: User not found")
-		return user, err
+		return user, logger.LogErrorWithFields(err, "Error Database: User not found", map[string]interface{}{
+			"username": username,
+		})
 	}
 	return user, nil
 }
@@ -49,8 +50,9 @@ func (r *userRepository) Create(ctx context.Context, user *models.User) error {
 	query := `INSERT INTO users(username, password, created_at) VALUES (:username, :password, NOW())`
 	_, err := r.db.Write.NamedExecContext(ctx, query, user)
 	if err != nil {
-		log.Error().Err(err).Str("username", user.Username).Msg("Error Database: User already exists")
-		return err
+		return logger.LogErrorWithFields(err, "Error Database: User already exists", map[string]interface{}{
+			"username": user.Username,
+		})
 	}
 	return nil
 }
@@ -70,8 +72,9 @@ func (r *userRepository) GetAllUsers(ctx context.Context, search string) ([]mode
 
 	err := r.db.Read.SelectContext(ctx, &users, query, args...)
 	if err != nil {
-		log.Error().Err(err).Str("search", search).Msg("Failed to gather user data")
-		return nil, err
+		return nil, logger.LogErrorWithFields(err, "Failed to gather user data", map[string]interface{}{
+			"search": search,
+		})
 	}
 
 	return users, nil
@@ -89,8 +92,7 @@ func (r *userRepository) GetStats(ctx context.Context) (models.UserStats, error)
 
 	err := r.db.Read.GetContext(ctx, &stats, query)
 	if err != nil {
-		log.Error().Err(err).Msg("error gathering user statistics")
-		return stats, err
+		return stats, logger.LogError(err, "error gathering user statistics")
 	}
 
 	return stats, nil
@@ -101,8 +103,10 @@ func (r *userRepository) UpdateRole(ctx context.Context, userID int, newRole str
 
 	_, err := r.db.Write.ExecContext(ctx, query, newRole, userID)
 	if err != nil {
-		log.Error().Err(err).Int("user_id", userID).Str("new_role", newRole).Msg("error changing role")
-		return err
+		return logger.LogErrorWithFields(err, "error changing role", map[string]interface{}{
+			"user_id":  userID,
+			"new_role": newRole,
+		})
 	}
 
 	return nil
@@ -113,8 +117,9 @@ func (r *userRepository) Delete(ctx context.Context, userID int) error {
 
 	_, err := r.db.Write.ExecContext(ctx, query, userID)
 	if err != nil {
-		log.Error().Err(err).Int("user_id", userID).Msg("error deleting user")
-		return err
+		return logger.LogErrorWithFields(err, "error deleting user", map[string]interface{}{
+			"user_id": userID,
+		})
 	}
 
 	return nil

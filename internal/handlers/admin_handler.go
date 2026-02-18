@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/rafli2460/culinary-blog-api/internal/models"
 	"github.com/rafli2460/culinary-blog-api/internal/service"
+	"github.com/rafli2460/culinary-blog-api/pkg/response"
 	"github.com/rs/zerolog/log"
 )
 
@@ -34,86 +35,58 @@ func (h *AdminHandler) GetUsers(c fiber.Ctx) error {
 
 	users, err := h.userService.GetAllUsers(c.Context(), search)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"status":  "error",
-			"message": "failed to retrieve data",
-		})
+		return response.Error(c, fiber.StatusInternalServerError, "failed to retrieve data")
 	}
 
-	return c.JSON(fiber.Map{
-		"status": "success",
-		"data":   users,
-	})
+	return response.Success(c, fiber.StatusOK, "User data successfully retrieved", users, nil)
 }
 
 func (h *AdminHandler) GetStats(c fiber.Ctx) error {
 	stats, err := h.userService.GetStats(c.Context())
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"status":  "error",
-			"message": "failed to retrieve user data",
-		})
+		return response.Error(c, fiber.StatusInternalServerError, "failed to retrieve user data")
 	}
 
-	return c.JSON(fiber.Map{
-		"status": "success",
-		"data":   stats,
-	})
+	return response.Success(c, fiber.StatusOK, "Statistics successfully retrieved", stats, nil)
 }
 
 func (h *AdminHandler) UpdateRole(c fiber.Ctx) error {
 	targetID, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"status": "error", "message": "Invalid user ID",
-		})
+		return response.Error(c, fiber.StatusBadRequest, "Invalid user ID")
 	}
 
 	var req models.UpdateRoleRequest
 	if err := c.Bind().Body(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"status": "error", "message": "Invalid data format",
-		})
+		return response.Error(c, fiber.StatusBadRequest, "Invalid data format")
 	}
 
 	currentAdminID := getAdminID(c)
 
 	err = h.userService.UpdateRole(c.Context(), targetID, currentAdminID, req.Role)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"status": "error", "message": err.Error(),
-		})
+		return response.Error(c, fiber.StatusBadRequest, err.Error())
 	}
 
 	log.Info().Int("admin_id", currentAdminID).Int("target_id", targetID).Str("new_role", req.Role).Msg("Role successfully updated")
 
-	return c.JSON(fiber.Map{
-		"status":  "success",
-		"message": "User role successfully updated",
-	})
+	return response.Success(c, fiber.StatusOK, "User role successfully updated", nil, nil)
 }
 
 func (h *AdminHandler) DeleteUser(c fiber.Ctx) error {
 	targetID, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"status": "error", "message": "Invalid user ID",
-		})
+		return response.Error(c, fiber.StatusBadRequest, "Invalid user ID")
 	}
 
 	currentAdminID := getAdminID(c)
 
 	err = h.userService.DeleteUser(c.Context(), targetID, currentAdminID)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"status": "error", "message": err.Error(),
-		})
+		return response.Error(c, fiber.StatusBadRequest, err.Error())
 	}
 
 	log.Info().Int("admin_id", currentAdminID).Int("target_id", targetID).Msg("User successfully deleted")
 
-	return c.JSON(fiber.Map{
-		"status":  "success",
-		"message": "User successfully deleted",
-	})
+	return response.Success(c, fiber.StatusOK, "User successfully deleted", nil, nil)
 }
