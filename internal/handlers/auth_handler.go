@@ -32,7 +32,7 @@ func (h *AuthHandler) Register(c fiber.Ctx) error {
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"status":  fiber.StatusCreated,
-		"message": "Registration success, Please Login",
+		"message": "Registration successful, please login",
 	})
 }
 
@@ -66,7 +66,7 @@ func (h *AuthHandler) Login(c fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"status":  "success",
-		"message": "login success",
+		"message": "Login successful",
 	})
 }
 
@@ -82,6 +82,6 @@ func (h *AuthHandler) Logout(c fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"status":  "success",
-		"message": "Logout success",
+		"message": "Logout successful",
 	})
 }

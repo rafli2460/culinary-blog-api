@@ -15,10 +15,10 @@ type UserRepository interface {
 	GetByUsername(ctx context.Context, username string) (models.User, error)
 	Create(ctx context.Context, user *models.User) error
 
-	GetAllUsers(ctx context.Context, user *models.User) error
+	GetAllUsers(ctx context.Context, search string) ([]models.User, error)
 	GetStats(ctx context.Context) (models.UserStats, error)
 	UpdateRole(ctx context.Context, userID int, newRole string) error
-	DeleteUser(ctx context.Context, userID int) error
+	Delete(ctx context.Context, userID int) error
 }
 
 type userRepository struct {
@@ -49,24 +49,73 @@ func (r *userRepository) Create(ctx context.Context, user *models.User) error {
 	query := `INSERT INTO users(username, password, created_at) VALUES (:username, :password, NOW())`
 	_, err := r.db.Write.NamedExecContext(ctx, query, user)
 	if err != nil {
-		log.Error().Err(err).Str("username", user.Username).Msg("Error Database: User already exist")
+		log.Error().Err(err).Str("username", user.Username).Msg("Error Database: User already exists")
 		return err
 	}
 	return nil
 }
 
-func (r *userRepository) GetAllUsers(ctx context.Context, user *models.User) error {
-	panic("not implemented") // TODO: Implement
+func (r *userRepository) GetAllUsers(ctx context.Context, search string) ([]models.User, error) {
+	var users []models.User
+	query := `SELECT id, username, role, created_at FROM users`
+	var args []interface{}
+
+	if search != "" {
+		query += ` WHERE username like ? OR role LIKE ?`
+		likeSearch := "%" + search + "%"
+		args = append(args, likeSearch, likeSearch)
+	}
+
+	query += ` ORDER BY created_at DESC`
+
+	err := r.db.Read.SelectContext(ctx, &users, query, args...)
+	if err != nil {
+		log.Error().Err(err).Str("search", search).Msg("Failed to gather user data")
+		return nil, err
+	}
+
+	return users, nil
 }
 
 func (r *userRepository) GetStats(ctx context.Context) (models.UserStats, error) {
-	panic("not implemented") // TODO: Implement
+	var stats models.UserStats
+
+	query := `
+		SELECT
+			COUNT(*) as total_users,
+			COALESCE(SUM(CASE WHEN role = 'admin' THEN 1 ELSE 0 END), 0) as admin_count
+		FROM users
+	`
+
+	err := r.db.Read.GetContext(ctx, &stats, query)
+	if err != nil {
+		log.Error().Err(err).Msg("error gathering user statistics")
+		return stats, err
+	}
+
+	return stats, nil
 }
 
 func (r *userRepository) UpdateRole(ctx context.Context, userID int, newRole string) error {
-	panic("not implemented") // TODO: Implement
+	query := `UPDATE users SET role = ? WHERE id = ?`
+
+	_, err := r.db.Write.ExecContext(ctx, query, newRole, userID)
+	if err != nil {
+		log.Error().Err(err).Int("user_id", userID).Str("new_role", newRole).Msg("error changing role")
+		return err
+	}
+
+	return nil
 }
 
-func (r *userRepository) DeleteUser(ctx context.Context, userID int) error {
-	panic("not implemented") // TODO: Implement
+func (r *userRepository) Delete(ctx context.Context, userID int) error {
+	query := `DELETE FROM users WHERE id = ?`
+
+	_, err := r.db.Write.ExecContext(ctx, query, userID)
+	if err != nil {
+		log.Error().Err(err).Int("user_id", userID).Msg("error deleting user")
+		return err
+	}
+
+	return nil
 }

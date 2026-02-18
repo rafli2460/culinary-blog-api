@@ -11,42 +11,57 @@ This repository contains the backend services for a Culinary Blog platform. Orig
 ## Tech Stack
 
 - **Language:** [Go](https://go.dev/) (Golang)
-- **Framework:** [Fiber v2](https://gofiber.io/)
+- **Framework:** [Fiber v3](https://gofiber.io/)
 - **Database:** MySQL
 - **Database Access:** [SQLX](https://github.com/jmoiron/sqlx)
+- **Authentication:** JWT (JSON Web Token)
 - **Logging:** [Zerolog](https://github.com/rs/zerolog)
-- **Architecture:** Modular Clean Architecture
+- **Environment Management:** [Godotenv](https://github.com/joho/godotenv)
 
 ## Features
 
-- **User Management:** Registration, Login, and Role-based access control (RBAC).
-- **Database Separation:** Configured for Reader/Writer database splitting for scalability.
-- **High Performance:** Built on Fiber, one of the fastest Go web frameworks.
-- **Structured Logging:** JSON logging using Zerolog for observability.
+- **User Authentication:** Registration, Login (JWT-based), and Logout using HttpOnly cookies.
+- **Admin Management:**
+  - View user statistics.
+  - Manage user list with search functionality.
+  - Update user roles (RBAC).
+  - Delete user accounts.
+- **Database Separation:** Configured for Reader/Writer database splitting for optimized scalability.
+- **Structured Logging:** Console-friendly JSON logging using Zerolog.
+- **Health Check:** System health monitoring endpoint.
 
 ## Project Structure
 
 ```text
+├── cmd
+│   └── api
+│       └── app.go          # Application entry point
 ├── internal
-|   ├── config       # Configuration
-│   ├── domain       # Domain entities (Structs)
-│   ├── modules      # Feature modules (e.g., Users) containing Service & Repository layers
-│   ├── platform     # Infrastructure (Database connections, SQL preparation)
-│   └── server       # Server configuration, wiring, and dependency injection
-└── cmd/app          # Application entry point
+│   ├── config             # Database and environment configuration
+│   ├── handlers           # Request handlers (Controllers)
+│   ├── middleware         # Authentication and authorization middleware
+│   ├── models             # Data models and structures
+│   ├── repository         # Database access layer (SQL queries)
+│   ├── routes             # API route definitions
+│   └── service            # Business logic layer
+├── .env.example           # Example environment configuration
+├── go.mod                 # Go modules file
+└── go.sum                 # Go checksums file
 ```
 
 ## ⚙️ Configuration
 
-The application requires the following database configuration (typically via environment variables or a config file):
+Create a `.env` file based on `.env.example` and configure the following variables:
 
-- `DB_HOST_WRITER`: Hostname for the writer database instance.
-- `DB_HOST_READER`: Hostname for the reader database instance.
+- `APP_PORT`: Port for the application to run on (default: 3000).
+- `DB_WRITE_HOST`: Hostname for the writer database instance.
+- `DB_READ_HOST`: Hostname for the reader database instance.
 - `DB_PORT`: Database port.
 - `DB_USER`: Database username.
 - `DB_PASS`: Database password.
 - `DB_NAME`: Database name.
 - `DB_DIALECT`: Database driver name (e.g., `mysql`).
+- `JWT_SECRET`: Secret key for JWT signing.
 
 ## Getting Started
 
@@ -63,7 +78,13 @@ The application requires the following database configuration (typically via env
     go mod tidy
     ```
 
-3.  **Run the Application**
+3.  **Setup Environment**
     ```bash
-    go run main.go
+    cp .env.example .env
+    # Edit .env with your configuration
+    ```
+
+4.  **Run the Application**
+    ```bash
+    go run cmd/api/app.go
     ```
