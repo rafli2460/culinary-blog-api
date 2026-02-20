@@ -5,7 +5,12 @@ import (
 	"os"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/rafli2460/culinary-blog-api/pkg/logger"
 	"github.com/rs/zerolog/log"
+
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/mysql"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 type Database struct {
@@ -42,6 +47,8 @@ func InitDB() *Database {
 	}
 	log.Info().Msg("Successfully connect to Reader DB")
 
+	runMigrations(writeDB)
+
 	return &Database{
 		Read:  readDB,
 		Write: writeDB,
@@ -58,4 +65,32 @@ func (db *Database) Close() {
 	}
 
 	log.Info().Msg("Connection has been closed")
+}
+
+func runMigrations(db *sqlx.DB) {
+	driver, err := mysql.WithInstance(db.DB, &mysql.Config{})
+	if err != nil {
+		logger.SystemError("error creating database driver")
+	}
+
+	m, err := migrate.NewWithDatabaseInstance(
+		"file://migrations",
+		"mysql",
+		driver,
+	)
+	if err != nil {
+		logger.SystemError("error initiating database migration")
+	}
+
+	err = m.Up()
+	if err != nil {
+		if err == migrate.ErrNoChange {
+			log.Info().Msg("Database migration: no changes to apply")
+		} else {
+			logger.LogError(err, "failed to run migration")
+		}
+	} else {
+		log.Info().Msg("Database migration completed successfully")
+	}
+
 }
