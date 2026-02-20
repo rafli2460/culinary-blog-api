@@ -26,9 +26,38 @@ This repository contains the backend services for a Culinary Blog platform. Orig
   - Manage user list with search functionality.
   - Update user roles (RBAC).
   - Delete user accounts.
+- **Post Management:**
+  - **CRUD Operations:** Create, Read, Update, and Delete blog posts.
+  - **Image Support:** Upload and serve post images.
+  - **Pagination:** List posts with pagination support.
+  - **Access Control:** Public access for viewing, protected access for management.
 - **Database Separation:** Configured for Reader/Writer database splitting for optimized scalability.
 - **Structured Logging:** Console-friendly JSON logging using Zerolog.
 - **Health Check:** System health monitoring endpoint.
+
+## API Endpoints
+
+### Public
+- `GET /v1/health` - Check system health.
+- `GET /v1/posts` - Get all posts (supports `page` and `limit` query params).
+- `GET /v1/posts/:id` - Get details of a specific post.
+- `GET /uploads/*` - Serve uploaded images (Root level endpoint).
+
+### Authentication
+- `POST /v1/auth/register` - Register a new user.
+- `POST /v1/auth/login` - Login and receive JWT.
+- `POST /v1/auth/logout` - Logout user.
+
+### Post Management (Protected)
+- `POST /v1/post/` - Create a new post (requires `title`, `content`, `image`).
+- `PUT /v1/post/:id` - Update an existing post.
+- `DELETE /v1/post/:id` - Delete a post.
+
+### Admin (Protected)
+- `GET /v1/admin/users` - Get list of users.
+- `GET /v1/admin/users/stats` - Get user statistics.
+- `PUT /v1/admin/users/:id/role` - Update a user's role.
+- `DELETE /v1/admin/users/:id` - Delete a user.
 
 ## Project Structure
 
@@ -44,6 +73,9 @@ This repository contains the backend services for a Culinary Blog platform. Orig
 │   ├── repository         # Database access layer (SQL queries)
 │   ├── routes             # API route definitions
 │   └── service            # Business logic layer
+├── migrations             # Database migrations
+├── pkg                    # Shared packages (Logger, Response)
+├── uploads                # Directory for uploaded images
 ├── .env.example           # Example environment configuration
 ├── go.mod                 # Go modules file
 └── go.sum                 # Go checksums file
@@ -84,7 +116,11 @@ Create a `.env` file based on `.env.example` and configure the following variabl
     # Edit .env with your configuration
     ```
 
-4.  **Run the Application**
+4.  **Run Migrations**
+    
+    The application automatically runs database migrations on startup. Ensure your database is running and configured correctly in the `.env` file before starting the application.
+
+5.  **Run the Application**
     ```bash
     go run cmd/api/app.go
     ```
